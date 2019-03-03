@@ -44,7 +44,7 @@ $$
 ```
 
 
-## Options
+### Options
 
 You can toggle math by using `enableMath(true|false)` set it to false to disable math.
 
