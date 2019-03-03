@@ -1,4 +1,9 @@
 # ParsedownMath
+
+![GitHub release](https://img.shields.io/github/release/BenjaminHoegh/parsedownMath.svg?style=flat-square)
+![GitHub](https://img.shields.io/github/license/BenjaminHoegh/parsedownMath.svg?style=flat-square)
+
+
 Latex support in Parsedown
 
 
