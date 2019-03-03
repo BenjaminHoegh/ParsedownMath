@@ -1,6 +1,6 @@
 <?php
 
-class ParsedownLatex extends Parsedown
+class ParsedownMath extends Parsedown
 {
     const VERSION = '1.0';
 
@@ -8,7 +8,7 @@ class ParsedownLatex extends Parsedown
     {
 
         if (version_compare(parent::version, '1.7.1') < 0) {
-            throw new Exception('ParsedownLatex requires a later version of Parsedown');
+            throw new Exception('ParsedownMath requires a later version of Parsedown');
         }
 
         // Blocks
