@@ -1,2 +1,2 @@
-# parsedown-latex
+# ParsedownMath
 Latex support in Parsedown
