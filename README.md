@@ -50,7 +50,7 @@ You can toggle math by using `enableMath(true|false)` set it to false to disable
 
 ## ParsedownExtra
 
-If you wanna use it with [ParsedownExtra](https://github.com/erusev/parsedownextra) you need to change the following line:
+If you wanna use it with [ParsedownExtra](https://github.com/erusev/parsedown-extra) you need to change the following line:
 ```
 class ParsedownMath extends Parsedown {
 ```
