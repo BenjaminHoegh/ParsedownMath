@@ -1,23 +1,42 @@
 <?php
+if (class_exists('ParsedownExtra')) {
+    class DynamicParent extends ParsedownExtra
+    {
+        public function __construct()
+        {
+            if (version_compare(parent::version, '0.8.1') < 0) {
+                throw new Exception('ParsedownExtended requires a later version of ParsedownExtra');
+            }
+            parent::__construct();
+        }
+    }
+} else {
+    class DynamicParent extends Parsedown
+    {
+        public function __construct()
+        {
+            if (version_compare(parent::version, '1.7.1') < 0) {
+                throw new Exception('ParsedownExtended requires a later version of Parsedown');
+            }
+        }
+    }
+}
 
-class ParsedownMath extends Parsedown
+
+class ParsedownMath extends DynamicParent
 {
     const VERSION = '1.0';
 
     public function __construct()
     {
-
-        if (version_compare(parent::version, '1.7.1') < 0) {
-            throw new Exception('ParsedownMath requires a later version of Parsedown');
-        }
-
-        // Blocks
+        // // Blocks
         $this->BlockTypes['\\'][] = 'Math';
         $this->BlockTypes['$'][] = 'Math';
 
         // Inline
         $this->InlineTypes['\\'][] = 'Math';
         $this->inlineMarkerList .= '\\';
+
     }
 
     // Setters
@@ -34,6 +53,71 @@ class ParsedownMath extends Parsedown
 
         return $this;
     }
+
+
+
+    protected function element(array $Element)
+    {
+        if ($this->safeMode)
+        {
+            $Element = $this->sanitiseElement($Element);
+        }
+
+        if(isset($Element['name'])) {
+            $markup = '<'.$Element['name'];
+        } else {
+            $markup = '';
+        }
+
+        if (isset($Element['attributes']))
+        {
+            foreach ($Element['attributes'] as $name => $value)
+            {
+                if ($value === null)
+                {
+                    continue;
+                }
+
+                $markup .= ' '.$name.'="'.self::escape($value).'"';
+            }
+        }
+
+        if (isset($Element['text']))
+        {
+            if(isset($Element['name'])) {
+                $markup .= '>';
+            }
+
+            if (!isset($Element['nonNestables']))
+            {
+                $Element['nonNestables'] = array();
+            }
+
+            if (isset($Element['handler']))
+            {
+                $markup .= $this->{$Element['handler']}($Element['text'], $Element['nonNestables']);
+            }
+            else
+            {
+                $markup .= self::escape($Element['text'], true);
+            }
+
+            if(isset($Element['name'])) {
+                $markup .= '</'.$Element['name'].'>';
+            }
+        }
+        else
+        {
+            if(isset($Element['name'])) {
+                $markup .= ' />';
+            }
+        }
+
+        return $markup;
+    }
+
+
+
 
 
     // -------------------------------------------------------------------------
@@ -56,7 +140,7 @@ class ParsedownMath extends Parsedown
             return array(
                 'extent' => strlen($matches[0]),
                 'element' => array(
-                    'text' =>  $matches[0]
+                    'text' =>  $matches[0],
                 ),
             );
         }
