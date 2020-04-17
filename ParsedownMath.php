@@ -5,7 +5,7 @@ if (class_exists('ParsedownExtra')) {
         public function __construct()
         {
             if (version_compare(parent::version, '0.8.1') < 0) {
-                throw new Exception('ParsedownExtended requires a later version of ParsedownExtra');
+                throw new Exception('ParsedownMath requires a later version of ParsedownExtra');
             }
             parent::__construct();
         }
@@ -15,8 +15,8 @@ if (class_exists('ParsedownExtra')) {
     {
         public function __construct()
         {
-            if (version_compare(parent::version, '1.7.1') < 0) {
-                throw new Exception('ParsedownExtended requires a later version of Parsedown');
+            if (version_compare(parent::version, '1.7.3') < 0) {
+                throw new Exception('ParsedownMath requires a later version of Parsedown');
             }
         }
     }
@@ -29,6 +29,7 @@ class ParsedownMath extends DynamicParent
 
     public function __construct()
     {
+        parent::__construct();
         // // Blocks
         $this->BlockTypes['\\'][] = 'Math';
         $this->BlockTypes['$'][] = 'Math';
