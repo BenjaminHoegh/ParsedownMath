@@ -25,12 +25,12 @@ if (class_exists('ParsedownExtra')) {
 
 class ParsedownMath extends DynamicParent
 {
-    const VERSION = '1.1.1';
+    const VERSION = '1.2';
 
-    public function __construct()
+    public function __construct($options = '')
     {
         parent::__construct();
-        // // Blocks
+        // Blocks
         $this->BlockTypes['\\'][] = 'Math';
         $this->BlockTypes['$'][] = 'Math';
 
@@ -38,44 +38,30 @@ class ParsedownMath extends DynamicParent
         $this->InlineTypes['\\'][] = 'Math';
         $this->inlineMarkerList .= '\\';
 
+        $this->InlineTypes['$'][] = 'Math';
+        $this->inlineMarkerList .= '$';
+
+        $this->options['math']['enabled'] = (isset($options['math']['enabled']) ? $options['math']['enabled'] : false);
+        $this->options['math']['inline']['enabled'] = (isset($options['math']['inline']['enabled']) ? $options['math']['inline']['enabled'] : true);
+        $this->options['math']['block']['enabled'] = (isset($options['math']['block']['enabled']) ? $options['math']['block']['enabled'] : true);
+        $this->options['math']['matchSingleDollar'] = (isset($options['math']['matchSingleDollar']) ? $options['math']['matchSingleDollar'] : false);
     }
-
-    // Setters
-
-    protected $mathMode = true;
-
-    public function enableMath($input = true)
-    {
-        $this->mathMode = $input;
-
-        if ($input == false) {
-            return $this;
-        }
-
-        return $this;
-    }
-
-
 
     protected function element(array $Element)
     {
-        if ($this->safeMode)
-        {
+        if ($this->safeMode) {
             $Element = $this->sanitiseElement($Element);
         }
 
-        if(isset($Element['name'])) {
+        if (isset($Element['name'])) {
             $markup = '<'.$Element['name'];
         } else {
             $markup = '';
         }
 
-        if (isset($Element['attributes']))
-        {
-            foreach ($Element['attributes'] as $name => $value)
-            {
-                if ($value === null)
-                {
+        if (isset($Element['attributes'])) {
+            foreach ($Element['attributes'] as $name => $value) {
+                if ($value === null) {
                     continue;
                 }
 
@@ -83,33 +69,26 @@ class ParsedownMath extends DynamicParent
             }
         }
 
-        if (isset($Element['text']))
-        {
-            if(isset($Element['name'])) {
+        if (isset($Element['text'])) {
+            if (isset($Element['name'])) {
                 $markup .= '>';
             }
 
-            if (!isset($Element['nonNestables']))
-            {
+            if (!isset($Element['nonNestables'])) {
                 $Element['nonNestables'] = array();
             }
 
-            if (isset($Element['handler']))
-            {
+            if (isset($Element['handler'])) {
                 $markup .= $this->{$Element['handler']}($Element['text'], $Element['nonNestables']);
-            }
-            else
-            {
+            } else {
                 $markup .= self::escape($Element['text'], true);
             }
 
-            if(isset($Element['name'])) {
+            if (isset($Element['name'])) {
                 $markup .= '</'.$Element['name'].'>';
             }
-        }
-        else
-        {
-            if(isset($Element['name'])) {
+        } else {
+            if (isset($Element['name'])) {
                 $markup .= ' />';
             }
         }
@@ -132,19 +111,56 @@ class ParsedownMath extends DynamicParent
 
     protected function inlineMath($Excerpt)
     {
-        if (!$this->mathMode) {
+        if (!$this->options['math']['enabled'] === true && !$this->options['math']['inline']['enabled'] !== false) {
             return;
         }
 
-        // if (preg_match('/^(?<!\\\\)((?<!\\\\\()\\\\\((?!\\\\\())(.*?)(?<!\\\\)(?<!\\\\\()((?<!\\\\\))\\\\\)(?!\\\\\)))(?!\\\\\()/s', $Excerpt['text'], $matches)) {
-        if (preg_match('/^(?<!\\\\)(?<!\\\\\()\\\\\((.*?)(?<!\\\\\()\\\\\)(?!\\\\\))/s', $Excerpt['text'], $matches)) {
-            return array(
-                'extent' => strlen($matches[0]),
+        $matchSignleDollar = $this->options['math']['matchSingleDollar'] ?? false;
+
+
+        // Using inline detection to detect Block single-line math.
+
+        if (preg_match('/^(?<!\\\\)(?<!\$)\${2}(?!\$)[^$]*?(?<!\$)\${2}(?!\$)$/', $Excerpt['text'], $matches)) {
+            $Block = array(
                 'element' => array(
-                    'text' =>  $matches[0],
+                    'text' => '',
+                ),
+            );
+
+            $Block['end'] = '$$';
+            $Block['complete'] = true;
+            $Block['latex'] = true;
+            $Block['element']['text'] = $matches[0];
+            $Block['extent'] = strlen($Block['element']['text']);
+            return $Block;
+        }
+
+
+        // Inline Matches
+        if ($matchSignleDollar === true) {
+            // Experimental
+            if (preg_match('/^(?<!\\\\)((?<!\$)\$(?!\$)(.*?)(?<!\$)\$(?!\$)|(?<!\\\\\()\\\\\((.*?)(?<!\\\\\()\\\\\)(?!\\\\\)))/s', $Excerpt['text'], $matches)) {
+                $this->mathMatch = $matches[0];
+            }
+        } else {
+            if (preg_match('/^(?<!\\\\)(?<!\\\\\()\\\\\((.*?)(?<!\\\\\()\\\\\)(?!\\\\\))/s', $Excerpt['text'], $matches)) {
+                $this->mathMatch = $matches[0];
+            }
+        }
+
+        if (isset($this->mathMatch)) {
+            return array(
+                'extent' => strlen($this->mathMatch),
+                'element' => array(
+                    'text' =>  $this->mathMatch,
                 ),
             );
         }
+
+
+
+
+
     }
 
     protected $specialCharacters = array(
@@ -165,8 +181,10 @@ class ParsedownMath extends DynamicParent
             'extent' => 2,
         );
 
-        if ($this->mathMode) {
-            if (isset($Excerpt['text'][1]) && in_array($Excerpt['text'][1], $this->specialCharacters) && !preg_match('/(?<!\\\\)((?<!\\\\\()\\\\\((?!\\\\\())(.*?)(?<!\\\\)(?<!\\\\\()((?<!\\\\\))\\\\\)(?!\\\\\)))(?!\\\\\()/s', $Excerpt['text'])) {
+        if ($this->options['math']['enabled'] === true) {
+            if (isset($Excerpt['text'][1]) && in_array($Excerpt['text'][1], $this->specialCharacters) && !preg_match('/^(?<!\\\\)((?<!\\\\\()\\\\\((?!\\\\\())(.*?)(?<!\\\\)(?<!\\\\\()((?<!\\\\\))\\\\\)(?!\\\\\)))(?!\\\\\()/s', $Excerpt['text'])) {
+                return $Element;
+            } elseif (isset($Excerpt['text'][1]) && in_array($Excerpt['text'][1], $this->specialCharacters) && !preg_match('/^(?<!\\\\)(?<!\\\\\()\\\\\((.{1,}?)(?<!\\\\\()\\\\\)(?!\\\\\))/s', $Excerpt['text'])) {
                 return $Element;
             }
         } else {
@@ -189,6 +207,10 @@ class ParsedownMath extends DynamicParent
 
     protected function blockMath($Line)
     {
+        if (!$this->options['math']['enabled'] === true && !$this->options['math']['block']['enabled'] !== false) {
+            return;
+        }
+
         $Block = array(
             'element' => array(
                 'text' => '',
