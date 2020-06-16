@@ -1,5 +1,5 @@
 <!-- ![ParsedownMath](docs/img/ParsedownMath.png) -->
-<p align="center"><img alt="ParsedownMath" src="docs/img/ParsedownMath.png" height="330" /></p>
+<p align="center"><img alt="ParsedownMath" src="docs/img/parsedownMath.png" height="330" /></p>
 
 # ParsedownMath
 
