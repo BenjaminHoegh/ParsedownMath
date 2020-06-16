@@ -1,3 +1,6 @@
+<!-- ![ParsedownMath](docs/img/ParsedownMath.png) -->
+<p align="center"><img alt="ParsedownMath" src="docs/img/ParsedownMath.png" height="330" /></p>
+
 # ParsedownMath
 
 ![GitHub release](https://img.shields.io/github/release/BenjaminHoegh/parsedownMath.svg?style=flat-square)
