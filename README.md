@@ -11,7 +11,7 @@ Latex support in [Parsedown](https://github.com/erusev/parsedown)
 ## Features
 
 - Works with both Parsedown and ParsedownExtra
-- Tested in php 7.0 to 7.3
+- Tested in php 7.0 to 8.0
 
 ## Get started
 
