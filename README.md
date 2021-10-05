@@ -92,7 +92,7 @@ To enable single dollar sign for inline match:
 ```php
 $Parsedown = new ParsedownMath([
     'math' => [
-        'matchSignleDollar' = true // default false
+        'matchSingleDollar' => true // default false
     ]
 ]);
 ```
