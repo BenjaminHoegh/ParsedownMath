@@ -1,0 +1,5 @@
+{
+    "require": {
+        "erusev/parsedown": "2.0.x-dev"
+    }
+}
