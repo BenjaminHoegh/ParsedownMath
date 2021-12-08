@@ -10,7 +10,8 @@ use Erusev\Parsedown\Parsing\Context;
 use Erusev\Parsedown\Parsing\Line;
 use Erusev\Parsedown\Parsing\Lines;
 use Erusev\Parsedown\State;
-use BenjaminHoegh\ParsedownMath\Configurables\MathBook;
+
+use Erusev\ParsedownExtra\Configurables\MathBook;
 
 final class Math implements StateUpdatingBlock, ContinuableBlock
 {
@@ -116,4 +117,3 @@ final class Math implements StateUpdatingBlock, ContinuableBlock
         return new Invisible;
     }
 }
-?>

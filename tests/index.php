@@ -1,14 +1,15 @@
 <?php
 
 require_once 'vendor/autoload.php';
-require_once '../src/parsedownMath.php';
 
-use BenjaminHoegh\ParsedownMath;
-use BenjaminHoegh\ParsedownMath\Features\Math;
+use Erusev\Parsedown\Parsedown;
+use Erusev\ParsedownExtra\ParsedownExtra;
+use BenjaminHoegh\ParsedownMath\ParsedownMath;
 
-$State = Math::from(new State);
 
-$Parsedown = new Parsedown(ParsedownMath::from(new State));
+$Parsedown = new Parsedown(ParsedownExtra::from(new ParsedownMath()));
+
+$markdown = file_get_contents('test.md');
 
 $actualMarkup = $Parsedown->toHtml($markdown);
 

@@ -1,4 +1,4 @@
 vendor/
-test/
+tests/
 composer.lock
 notes.md

@@ -1,5 +1,7 @@
 {
     "require": {
-        "erusev/parsedown": "2.0.x-dev"
+        "erusev/parsedown": "2.0.x-dev",
+        "benjaminhoegh/parsedown-math": "2.0.x-dev",
+        "erusev/parsedown-extra": "2.0.x-dev"
     }
 }

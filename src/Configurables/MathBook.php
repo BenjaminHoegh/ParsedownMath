@@ -3,6 +3,7 @@
 namespace BenjaminHoegh\ParsedownMath\Configurables;
 
 use Erusev\Parsedown\MutableConfigurable;
+
 use BenjaminHoegh\ParsedownMath\Components\Blocks\Math;
 
 final class MathBook implements MutableConfigurable

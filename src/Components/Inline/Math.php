@@ -8,6 +8,7 @@ use Erusev\Parsedown\Html\Renderables\Element;
 use Erusev\Parsedown\Html\Renderables\Text;
 use Erusev\Parsedown\Parsing\Excerpt;
 use Erusev\Parsedown\State;
+
 use BenjaminHoegh\ParsedownMath\Configurables\MathBook;
 
 final class Math implements Inline
@@ -79,15 +80,16 @@ final class Math implements Inline
      */
     public function stateRenderable()
     {
-        return new Element(
-            'sup',
-            ['id' => 'fnref'.\strval($this->count()).':'.$this->title()],
-            [new Element(
-                'a',
-                ['href' => '#fn:'.$this->title(), 'class' => 'footnote-ref'],
-                [new Text(\strval($this->number()))]
-            )]
-        );
+        return new Text($this->title());
+        // return new Element(
+        //     'sup',
+        //     ['id' => 'fnref'.\strval($this->count()).':'.$this->title()],
+        //     [new Element(
+        //         'a',
+        //         ['href' => '#fn:'.$this->title(), 'class' => 'footnote-ref'],
+        //         [new Text(\strval($this->number()))]
+        //     )]
+        // );
     }
 
     /**
