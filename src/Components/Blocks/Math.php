@@ -4,33 +4,38 @@ namespace BenjaminHoegh\ParsedownMath\Components\Blocks;
 
 use Erusev\Parsedown\Components\Block;
 use Erusev\Parsedown\Components\ContinuableBlock;
-use Erusev\Parsedown\Components\StateUpdatingBlock;
-use Erusev\Parsedown\Html\Renderables\Invisible;
+use Erusev\Parsedown\Html\Renderables\Text;
 use Erusev\Parsedown\Parsing\Context;
 use Erusev\Parsedown\Parsing\Line;
 use Erusev\Parsedown\Parsing\Lines;
 use Erusev\Parsedown\State;
 
-use Erusev\ParsedownExtra\Configurables\MathBook;
-
-final class Math implements StateUpdatingBlock, ContinuableBlock
+final class Math implements ContinuableBlock
 {
-    /** @var State */
-    private $State;
-
     /** @var string */
-    private $title;
-
-    /** @var Lines */
-    private $Lines;
-
-    private function __construct(State $State, string $title, Lines $Lines)
+    private $text;
+    
+    /** @var string */
+    private $marker;
+    
+    /** @var int */
+    private $openerLength;
+    
+    /** @var bool */
+    private $isComplete;
+    
+    /**
+     * @param string $text
+     * @param string $marker
+     * @param bool $isComplete
+     */
+    private function __construct($text, $marker, $isComplete)
     {
-        $this->State = $State;
-        $this->title = $title;
-        $this->Lines = $Lines;
+        $this->text = $text;
+        $this->marker = $marker;
+        $this->isComplete = $isComplete;
     }
-
+    
     /**
      * @param Context $Context
      * @param State $State
@@ -42,78 +47,92 @@ final class Math implements StateUpdatingBlock, ContinuableBlock
         State $State,
         Block $Block = null
     ) {
-        if (\preg_match(
-            '/^\[\^(.+?)\]:(.*+)$/',
-            $Context->line()->text(),
-            $matches
-        )) {
-            $indentOffset = $Context->line()->indentOffset() + $Context->line()->indent() + \strlen($matches[1]) + 4;
-
-            $title = $matches[1];
-            $text = $matches[2];
-
-            $Footnote = new self(
-                $State,
-                $title,
-                Lines::fromTextLines($text, $indentOffset)
-            );
-
-            $State->get(MathBook::class)->mutatingSetBlock($Footnote);
-
-            return $Footnote;
+        $line = $Context->line()->text();
+        
+        switch ($line)
+        {
+            // MathJax/KaTeX Standard
+            case '\\[':
+                $marker = $line;
+                break;
+            case '$$':
+                $marker = $line;
+                break;
+            // KaTeX Environments
+            case (preg_match('/^\\\begin{.*}({.*})?$/', $line) ? true : false):
+                $marker = $line;
+                break;
+            default:
+                return null;
         }
-
-        return null;
+        
+        return new self('', $marker, false);
     }
-
-    /** @return self|null */
-    public function advance(Context $Context, State $State): ?self
+    
+    /**
+     * @param Context $Context
+     * @param State $State
+     * @return self|null
+     */
+    public function advance(Context $Context, State $State)
     {
-        if ($Context->line()->indent() < 4) {
+        if ($this->isComplete) {
             return null;
         }
-
-        $Lines = $this->Lines;
-
-        $offset = $Context->line()->indentOffset();
-
-        if ($Context->precedingEmptyLines() > 0) {
-            foreach (\explode("\n", $Context->precedingEmptyLinesText()) as $line) {
-                $Lines = $Lines->appendingTextLines((new Line($line, $offset))->ltrimBodyUpto(4), $offset);
-            }
+    
+        $newText = $this->text;
+    
+        $newText .= $Context->precedingEmptyLinesText();
+                
+        switch ($this->marker)
+        {
+            // MathJax/KaTeX Standard
+            case '\\[':
+                if ($Context->line()->text() == '\\]')
+                {
+                    return new self('\\['.$newText.'\\]', $this->marker, true);
+                }
+                break;
+            case '$$':
+                if ($Context->line()->text() == '$$')
+                {
+                    return new self('$$'.$newText.'$$', $this->marker, true);
+                }
+                break;
+            // KaTeX Environments
+            case (preg_match('/^\\\begin{.*}({.*})?$/', $this->marker) ? true : false):
+                
+                $endMarker = str_replace('begin', 'end', $this->marker);
+                
+                if (substr_count($endMarker, "{") > 1)
+                {
+                    $endMarker = substr($endMarker, 0, strrpos( $endMarker, '{'));
+                }
+                
+                if ($endMarker == $Context->line()->text())
+                {
+                    return new self($this->marker.$newText.$endMarker, $this->marker, true);
+                }
+                break;
         }
-
-        $indentOffset = $Context->line()->indentOffset() + $Context->line()->indent();
-        $Lines = $Lines->appendingTextLines($Context->line()->text(), $indentOffset);
-
-        $Footnote = new self($State, $this->title, $Lines);
-
-        $State->get(MathBook::class)->mutatingSetBlock($Footnote);
-
-        return $Footnote;
+        
+        $newText .= $Context->line()->rawLine() . "\n";
+    
+        return new self($newText, $this->marker, false);
     }
-
-    /** @return State */
-    public function latestState()
+    
+    /** @return string */
+    public function text()
     {
-        return $this->State;
+        return $this->text;
     }
-
-    public function title(): string
-    {
-        return $this->title;
-    }
-
-    public function lines(): Lines
-    {
-        return $this->Lines;
-    }
-
+    
     /**
-     * @return Invisible
+     * @return Element
      */
     public function stateRenderable()
-    {
-        return new Invisible;
+    {    
+        return new Text($this->text());
     }
 }
+?>
