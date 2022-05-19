@@ -1,6 +1,6 @@
 <?php
 
-namespace BenjaminHoegh\ParsedownExtended\Components\Inlines;
+namespace BenjaminHoegh\ParsedownMath\Components\Inlines;
 
 use Erusev\Parsedown\Components\Inline;
 use Erusev\Parsedown\Components\Inlines\WidthTrait;

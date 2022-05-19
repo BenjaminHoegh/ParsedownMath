@@ -1,6 +1,6 @@
 <?php
 
-namespace BenjaminHoegh\ParsedownExtended\Components\Blocks;
+namespace BenjaminHoegh\ParsedownMath\Components\Blocks;
 
 use Erusev\Parsedown\Components\Block;
 use Erusev\Parsedown\Components\ContinuableBlock;

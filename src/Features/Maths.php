@@ -1,6 +1,6 @@
 <?php
 
-namespace BenjaminHoegh\ParsedownExtended\Features;
+namespace BenjaminHoegh\ParsedownMath\Features;
 
 use Erusev\Parsedown\Parsedown;
 use Erusev\Parsedown\State;
