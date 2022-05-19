@@ -2,23 +2,27 @@
 
 namespace BenjaminHoegh\ParsedownExtended\Components\Inlines;
 
+use Erusev\Parsedown\AST\Handler;
 use Erusev\Parsedown\Components\Inline;
 use Erusev\Parsedown\Components\Inlines\WidthTrait;
 use Erusev\Parsedown\Html\Renderables\Text;
+use Erusev\Parsedown\Html\Renderables\Element;
+use Erusev\Parsedown\Parsedown;
 use Erusev\Parsedown\Parsing\Excerpt;
 use Erusev\Parsedown\State;
 
-final class Math implements Inline
+
+final class Subscript implements Inline
 {
     use WidthTrait;
 
     /** @var string */
     private $text;
 
-    public function __construct(string $text)
+    private function __construct($text, $width)
     {
         $this->text = $text;
-        $this->width = \strlen($text);
+        $this->width = $width;
     }
 
     /**
@@ -28,12 +32,10 @@ final class Math implements Inline
      */
     public static function build(Excerpt $Excerpt, State $State = null)
     {
-        $State = $State ?: new State;
+        $text = $Excerpt->text();
 
-        if (\preg_match('/^\\\\\(.*\\\\\)|(?<!\$)\$[^$]{1,}\$(?!\$)/', $Excerpt->text(), $matches)) {
-            $text = $matches[0];
-
-            return new self($text);
+        if (\preg_match('/^(?:~(?!~)([^~ ]*)~(?!~))/', $text, $matches)) {
+            return new self($matches[1], \strlen($matches[0]));
         }
 
         return null;
@@ -49,7 +51,16 @@ final class Math implements Inline
      */
     public function stateRenderable()
     {
-        return new Text($this->text());
+        return new Handler(
+            /** @return Element */
+            function (State $State) {
+                return new Element(
+                    'sub',
+                    [],
+                    $State->applyTo(Parsedown::line($this->text(), $State))
+                );
+            }
+        );
     }
 
     /**

@@ -1,6 +1,6 @@
 <?php
 
-namespace BenjaminHoegh\ParsedownMath\Components\Blocks;
+namespace BenjaminHoegh\ParsedownExtended\Components\Blocks;
 
 use Erusev\Parsedown\Components\Block;
 use Erusev\Parsedown\Components\ContinuableBlock;
@@ -14,16 +14,16 @@ final class Math implements ContinuableBlock
 {
     /** @var string */
     private $text;
-    
+
     /** @var string */
     private $marker;
-    
+
     /** @var int */
     private $openerLength;
-    
+
     /** @var bool */
     private $isComplete;
-    
+
     /**
      * @param string $text
      * @param string $marker
@@ -35,7 +35,7 @@ final class Math implements ContinuableBlock
         $this->marker = $marker;
         $this->isComplete = $isComplete;
     }
-    
+
     /**
      * @param Context $Context
      * @param State $State
@@ -48,7 +48,7 @@ final class Math implements ContinuableBlock
         Block $Block = null
     ) {
         $line = $Context->line()->text();
-        
+
         switch ($line)
         {
             // MathJax/KaTeX Standard
@@ -65,10 +65,10 @@ final class Math implements ContinuableBlock
             default:
                 return null;
         }
-        
+
         return new self('', $marker, false);
     }
-    
+
     /**
      * @param Context $Context
      * @param State $State
@@ -79,11 +79,11 @@ final class Math implements ContinuableBlock
         if ($this->isComplete) {
             return null;
         }
-    
+
         $newText = $this->text;
-    
+
         $newText .= $Context->precedingEmptyLinesText();
-                
+
         switch ($this->marker)
         {
             // MathJax/KaTeX Standard
@@ -101,37 +101,37 @@ final class Math implements ContinuableBlock
                 break;
             // KaTeX Environments
             case (preg_match('/^\\\begin{.*}({.*})?$/', $this->marker) ? true : false):
-                
+
                 $endMarker = str_replace('begin', 'end', $this->marker);
-                
+
                 if (substr_count($endMarker, "{") > 1)
                 {
                     $endMarker = substr($endMarker, 0, strrpos( $endMarker, '{'));
                 }
-                
+
                 if ($endMarker == $Context->line()->text())
                 {
                     return new self($this->marker.$newText.$endMarker, $this->marker, true);
                 }
                 break;
         }
-        
+
         $newText .= $Context->line()->rawLine() . "\n";
-    
+
         return new self($newText, $this->marker, false);
     }
-    
+
     /** @return string */
     public function text()
     {
         return $this->text;
     }
-    
+
     /**
      * @return Element
      */
     public function stateRenderable()
-    {    
+    {
         return new Text($this->text());
     }
 }

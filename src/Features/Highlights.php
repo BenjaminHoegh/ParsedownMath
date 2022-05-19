@@ -5,13 +5,11 @@ namespace BenjaminHoegh\ParsedownExtended\Features;
 use Erusev\Parsedown\Parsedown;
 use Erusev\Parsedown\State;
 use Erusev\Parsedown\StateBearer;
-use Erusev\Parsedown\Configurables\BlockTypes;
 use Erusev\Parsedown\Configurables\InlineTypes;
 
-use BenjaminHoegh\ParsedownExtended\Components\Blocks\Math;
-use BenjaminHoegh\ParsedownExtended\Components\Inlines\Math as InlineMath;
+use BenjaminHoegh\ParsedownExtended\Components\Inlines\Highlight;
 
-final class Maths implements StateBearer
+final class Highlights implements StateBearer
 {
     /** @var State */
     private $State;
@@ -20,18 +18,11 @@ final class Maths implements StateBearer
     {
         $State = ($StateBearer ?? new State)->state();
 
-        $BlockTypes = $State->get(BlockTypes::class)
-            ->addingMarkedHighPrecedence('\\', [Math::class])
-            ->addingMarkedHighPrecedence('$', [Math::class])
-        ;
-
         $InlineTypes = $State->get(InlineTypes::class)
-            ->addingHighPrecedence('\\', [InlineMath::class])
-            ->addingHighPrecedence('$', [InlineMath::class])
+            ->addingHighPrecedence('=', [Highlight::class])
         ;
 
         $this->State = $State
-            ->setting($BlockTypes)
             ->setting($InlineTypes)
         ;
     }
