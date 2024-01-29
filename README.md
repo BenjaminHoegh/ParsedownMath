@@ -8,6 +8,9 @@
 
 Latex support in [Parsedown](https://github.com/erusev/parsedown)
 
+> [!NOTE]
+> Does not yet include the lasted changes in ParsedownExtended v1.2.0
+
 ## Features
 
 - Works with both Parsedown and ParsedownExtra
