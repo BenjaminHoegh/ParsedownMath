@@ -14,29 +14,28 @@ class ParsedownMath extends ParsedownMathParentAlias
 
     public function __construct($options = '')
     {
+        if (version_compare(\Parsedown::version, self::VERSION_PARSEDOWN_REQUIRED) < 0) {
+            $msg_error  = 'Version Error.' . PHP_EOL;
+            $msg_error .= '  ParsedownMath requires a later version of Parsedown.' . PHP_EOL;
+            $msg_error .= '  - Current version : ' . \Parsedown::version . PHP_EOL;
+            $msg_error .= '  - Required version: ' . self::VERSION_PARSEDOWN_REQUIRED .' and later'. PHP_EOL;
+            throw new Exception($msg_error);
+        }
 
-        public function __construct()
-        {
-            if (version_compare(\Parsedown::version, self::VERSION_PARSEDOWN_REQUIRED) < 0) {
+        # If ParsedownExtra is installed, check its version
+        if (class_exists('ParsedownExtra')) {
+            if (version_compare(\ParsedownExtra::version, self::VERSION_PARSEDOWN_EXTRA_REQUIRED) < 0) {
                 $msg_error  = 'Version Error.' . PHP_EOL;
-                $msg_error .= '  ParsedownMath requires a later version of Parsedown.' . PHP_EOL;
-                $msg_error .= '  - Current version : ' . \Parsedown::version . PHP_EOL;
-                $msg_error .= '  - Required version: ' . self::VERSION_PARSEDOWN_REQUIRED .' and later'. PHP_EOL;
+                $msg_error .= '  ParsedownMath requires a later version of ParsedownExtra.' . PHP_EOL;
+                $msg_error .= '  - Current version : ' . \ParsedownExtra::version . PHP_EOL;
+                $msg_error .= '  - Required version: ' . self::VERSION_PARSEDOWN_EXTRA_REQUIRED .' and later'. PHP_EOL;
                 throw new Exception($msg_error);
             }
-    
-            # If ParsedownExtra is installed, check its version
-            if (class_exists('ParsedownExtra')) {
-                if (version_compare(\ParsedownExtra::version, self::VERSION_PARSEDOWN_EXTRA_REQUIRED) < 0) {
-                    $msg_error  = 'Version Error.' . PHP_EOL;
-                    $msg_error .= '  ParsedownMath requires a later version of ParsedownExtra.' . PHP_EOL;
-                    $msg_error .= '  - Current version : ' . \ParsedownExtra::version . PHP_EOL;
-                    $msg_error .= '  - Required version: ' . self::VERSION_PARSEDOWN_EXTRA_REQUIRED .' and later'. PHP_EOL;
-                    throw new Exception($msg_error);
-                }
-            }
+
+            parent::__construct();
+        }
         
-        parent::__construct();
+        
         // Blocks
         $this->BlockTypes['\\'][] = 'Math';
         $this->BlockTypes['$'][] = 'Math';
