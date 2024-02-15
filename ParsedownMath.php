@@ -31,9 +31,9 @@ class ParsedownMath extends ParsedownMathParentAlias
                 $msg_error .= '  - Required version: ' . self::VERSION_PARSEDOWN_EXTRA_REQUIRED .' and later'. PHP_EOL;
                 throw new Exception($msg_error);
             }
+            parent::__construct();
         }
         
-        parent::__construct();
         // Blocks
         $this->BlockTypes['\\'][] = 'Math';
         $this->BlockTypes['$'][] = 'Math';
