@@ -4,3 +4,5 @@ composer.lock
 notes.md
 .idea/
 rector.php
+.php-cs-fixer.cache
+.php-cs-fixer.dist.php
