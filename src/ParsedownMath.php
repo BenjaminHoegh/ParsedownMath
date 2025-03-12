@@ -6,7 +6,6 @@ if (class_exists('ParsedownExtra')) {
     class_alias('Parsedown', 'ParsedownMathParentAlias');
 }
 
-
 class ParsedownMath extends ParsedownMathParentAlias
 {
     public const VERSION = '1.3';
@@ -90,11 +89,9 @@ class ParsedownMath extends ParsedownMathParentAlias
         return parent::element($Element);
     }
 
-
     // -------------------------------------------------------------------------
     // -----------------------         Inline         --------------------------
     // -------------------------------------------------------------------------
-
 
     //
     // Inline Math
@@ -107,7 +104,6 @@ class ParsedownMath extends ParsedownMathParentAlias
         }
 
         $matchSignleDollar = $this->options['math']['matchSingleDollar'] ?? false;
-
 
         // Using inline detection to detect Block single-line math.
 
@@ -125,7 +121,6 @@ class ParsedownMath extends ParsedownMathParentAlias
             $Block['extent'] = strlen($Block['element']['text']);
             return $Block;
         }
-
 
         // Inline Matches
         if ($matchSignleDollar === true) {
@@ -146,17 +141,11 @@ class ParsedownMath extends ParsedownMathParentAlias
             ];
         }
         return null;
-
-
-
-
-
     }
 
     protected $specialCharacters = [
         '\\', '`', '*', '_', '{', '}', '[', ']', '(', ')', '<', '>', '#', '+', '-', '.', '!', '|', '~', '^', '=',
     ];
-
 
     //
     // Inline Escape
@@ -184,12 +173,9 @@ class ParsedownMath extends ParsedownMathParentAlias
         return null;
     }
 
-
-
     // -------------------------------------------------------------------------
     // -----------------------         Blocks         --------------------------
     // -------------------------------------------------------------------------
-
 
     //
     // Block Math
@@ -242,7 +228,6 @@ class ParsedownMath extends ParsedownMathParentAlias
             $Block['element']['text'] = '$$'.$Block['element']['text'].'$$';
             return $Block;
         }
-
 
         $Block['element']['text'] .= "\n" . $Line['body'];
 
