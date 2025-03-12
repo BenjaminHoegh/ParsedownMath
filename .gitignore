@@ -2,3 +2,5 @@ vendor/
 test/
 composer.lock
 notes.md
+.idea/
+rector.php
