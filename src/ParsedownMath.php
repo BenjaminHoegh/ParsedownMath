@@ -1,4 +1,5 @@
 <?php
+
 if (class_exists('ParsedownExtra')) {
     class_alias('ParsedownExtra', 'ParsedownMathParentAlias');
 } else {
@@ -8,34 +9,31 @@ if (class_exists('ParsedownExtra')) {
 
 class ParsedownMath extends ParsedownMathParentAlias
 {
-    const VERSION = '1.2.2';
-    const VERSION_PARSEDOWN_REQUIRED = '1.7.4';
-    const VERSION_PARSEDOWN_EXTRA_REQUIRED = '0.8.1';
+    public const VERSION = '1.3';
+    public const MIN_PHP_VERSION = '7.4';
+    public const VERSION_PARSEDOWN_REQUIRED = '1.7.4';
+    public const VERSION_PARSEDOWN_EXTRA_REQUIRED = '0.8.1';
+
+    private bool $legacyMode = false;
 
     protected $options = [];
 
     public function __construct($options = '')
     {
-        if (version_compare(\Parsedown::version, self::VERSION_PARSEDOWN_REQUIRED) < 0) {
-            $msg_error  = 'Version Error.' . PHP_EOL;
-            $msg_error .= '  ParsedownMath requires a later version of Parsedown.' . PHP_EOL;
-            $msg_error .= '  - Current version : ' . \Parsedown::version . PHP_EOL;
-            $msg_error .= '  - Required version: ' . self::VERSION_PARSEDOWN_REQUIRED .' and later'. PHP_EOL;
-            throw new Exception($msg_error);
-        }
+        // Check if the current PHP version meets the minimum requirement
+        $this->checkVersion('PHP', PHP_VERSION, self::MIN_PHP_VERSION);
 
-        # If ParsedownExtra is installed, check its version
+        // Check if the installed Parsedown version meets the minimum requirement
+        $this->checkVersion('Parsedown', \Parsedown::version, self::VERSION_PARSEDOWN_REQUIRED);
+
         if (class_exists('ParsedownExtra')) {
-            if (version_compare(\ParsedownExtra::version, self::VERSION_PARSEDOWN_EXTRA_REQUIRED) < 0) {
-                $msg_error  = 'Version Error.' . PHP_EOL;
-                $msg_error .= '  ParsedownMath requires a later version of ParsedownExtra.' . PHP_EOL;
-                $msg_error .= '  - Current version : ' . \ParsedownExtra::version . PHP_EOL;
-                $msg_error .= '  - Required version: ' . self::VERSION_PARSEDOWN_EXTRA_REQUIRED .' and later'. PHP_EOL;
-                throw new Exception($msg_error);
-            }
+            // Ensure ParsedownExtra meets the version requirement
+            $this->checkVersion('ParsedownExtra', \ParsedownExtra::version, self::VERSION_PARSEDOWN_EXTRA_REQUIRED);
             parent::__construct();
         }
-        
+
+        $this->setLegacyMode();
+
         // Blocks
         $this->BlockTypes['\\'][] = 'Math';
         $this->BlockTypes['$'][] = 'Math';
@@ -53,57 +51,44 @@ class ParsedownMath extends ParsedownMathParentAlias
         $this->options['math']['matchSingleDollar'] = ($options['math']['matchSingleDollar'] ?? false);
     }
 
-    protected function element(array $Element)
+    private function checkVersion(string $component, string $currentVersion, string $requiredVersion): void
     {
-        if ($this->safeMode) {
-            $Element = $this->sanitiseElement($Element);
+        // Compare the current version with the required version
+        if (version_compare($currentVersion, $requiredVersion) < 0) {
+            // Prepare an error message indicating version incompatibility
+            $msg_error  = 'Version Error.' . PHP_EOL;
+            $msg_error .= "  ParsedownMath requires a later version of $component." . PHP_EOL;
+            $msg_error .= "  - Current version : $currentVersion" . PHP_EOL;
+            $msg_error .= "  - Required version: $requiredVersion and later" . PHP_EOL;
+
+            // Throw an exception with the version error message
+            throw new \Exception($msg_error);
         }
-
-        if (isset($Element['name'])) {
-            $markup = '<'.$Element['name'];
-        } else {
-            $markup = '';
-        }
-
-        if (isset($Element['attributes'])) {
-            foreach ($Element['attributes'] as $name => $value) {
-                if ($value === null) {
-                    continue;
-                }
-
-                $markup .= ' '.$name.'="'.self::escape($value).'"';
-            }
-        }
-
-        if (isset($Element['text'])) {
-            if (isset($Element['name'])) {
-                $markup .= '>';
-            }
-
-            if (!isset($Element['nonNestables'])) {
-                $Element['nonNestables'] = array();
-            }
-
-            if (isset($Element['handler'])) {
-                $markup .= $this->{$Element['handler']}($Element['text'], $Element['nonNestables']);
-            } else {
-                $markup .= self::escape($Element['text'], true);
-            }
-
-            if (isset($Element['name'])) {
-                $markup .= '</'.$Element['name'].'>';
-            }
-        } else {
-            if (isset($Element['name'])) {
-                $markup .= ' />';
-            }
-        }
-
-        return $markup;
     }
 
+    private function setLegacyMode(): void
+    {
+        $parsedownVersion = preg_replace('/-.*$/', '', \Parsedown::version);
 
+        // Enable legacy mode if Parsedown version is between 1.7.4 and below 1.8.0
+        if (version_compare($parsedownVersion, '1.8.0') < 0 && version_compare($parsedownVersion, '1.7.4') >= 0) {
+            $this->legacyMode = true;
+        }
+    }
 
+    // #[Override]
+    protected function element(array $Element)
+    {
+        if ($this->legacyMode) {
+            // If the element's name is empty, return the text attribute
+            if (empty($Element['name'])) {
+                return $Element['text'] ?? '';
+            }
+        }
+
+        // Use the original element method from the parent
+        return parent::element($Element);
+    }
 
 
     // -------------------------------------------------------------------------
@@ -117,8 +102,8 @@ class ParsedownMath extends ParsedownMathParentAlias
 
     protected function inlineMath($Excerpt)
     {
-        if (!$this->options['math']['enabled'] === true && !$this->options['math']['inline']['enabled'] !== false) {
-            return;
+        if (!$this->options['math']['enabled'] && !$this->options['math']['inline']['enabled']) {
+            return null;
         }
 
         $matchSignleDollar = $this->options['math']['matchSingleDollar'] ?? false;
@@ -127,11 +112,11 @@ class ParsedownMath extends ParsedownMathParentAlias
         // Using inline detection to detect Block single-line math.
 
         if (preg_match('/^(?<!\\\\)(?<!\$)\${2}(?!\$)[^$]*?(?<!\$)\${2}(?!\$)$/', $Excerpt['text'], $matches)) {
-            $Block = array(
-                'element' => array(
+            $Block = [
+                'element' => [
                     'text' => '',
-                ),
-            );
+                ],
+            ];
 
             $Block['end'] = '$$';
             $Block['complete'] = true;
@@ -148,20 +133,19 @@ class ParsedownMath extends ParsedownMathParentAlias
             if (preg_match('/^(?<!\\\\)((?<!\$)\$(?!\$)(.*?)(?<!\$)\$(?!\$)|(?<!\\\\\()\\\\\((.*?)(?<!\\\\\()\\\\\)(?!\\\\\)))/s', $Excerpt['text'], $matches)) {
                 $this->mathMatch = $matches[0];
             }
-        } else {
-            if (preg_match('/^(?<!\\\\)(?<!\\\\\()\\\\\((.*?)(?<!\\\\\()\\\\\)(?!\\\\\))/s', $Excerpt['text'], $matches)) {
-                $this->mathMatch = $matches[0];
-            }
+        } elseif (preg_match('/^(?<!\\\\)(?<!\\\\\()\\\\\((.*?)(?<!\\\\\()\\\\\)(?!\\\\\))/s', $Excerpt['text'], $matches)) {
+            $this->mathMatch = $matches[0];
         }
 
-        if (isset($this->mathMatch)) {
-            return array(
+        if (property_exists($this, 'mathMatch') && $this->mathMatch !== null) {
+            return [
                 'extent' => strlen($this->mathMatch),
-                'element' => array(
+                'element' => [
                     'text' =>  $this->mathMatch,
-                ),
-            );
+                ],
+            ];
         }
+        return null;
 
 
 
@@ -169,23 +153,24 @@ class ParsedownMath extends ParsedownMathParentAlias
 
     }
 
-    protected $specialCharacters = array(
-        '\\', '`', '*', '_', '{', '}', '[', ']', '(', ')', '<', '>', '#', '+', '-', '.', '!', '|', '~', '^', '='
-    );
+    protected $specialCharacters = [
+        '\\', '`', '*', '_', '{', '}', '[', ']', '(', ')', '<', '>', '#', '+', '-', '.', '!', '|', '~', '^', '=',
+    ];
 
 
     //
     // Inline Escape
     // -------------------------------------------------------------------------
 
+    // #[Override]
     protected function inlineEscapeSequence($Excerpt)
     {
-        $Element = array(
-            'element' => array(
+        $Element = [
+            'element' => [
                 'rawHtml' => $Excerpt['text'][1],
-            ),
+            ],
             'extent' => 2,
-        );
+        ];
 
         if ($this->options['math']['enabled'] === true) {
             if (isset($Excerpt['text'][1]) && in_array($Excerpt['text'][1], $this->specialCharacters) && !preg_match('/^(?<!\\\\)((?<!\\\\\()\\\\\((?!\\\\\())(.*?)(?<!\\\\)(?<!\\\\\()((?<!\\\\\))\\\\\)(?!\\\\\)))(?!\\\\\()/s', $Excerpt['text'])) {
@@ -193,11 +178,10 @@ class ParsedownMath extends ParsedownMathParentAlias
             } elseif (isset($Excerpt['text'][1]) && in_array($Excerpt['text'][1], $this->specialCharacters) && !preg_match('/^(?<!\\\\)(?<!\\\\\()\\\\\((.{1,}?)(?<!\\\\\()\\\\\)(?!\\\\\))/s', $Excerpt['text'])) {
                 return $Element;
             }
-        } else {
-            if (isset($Excerpt['text'][1]) && in_array($Excerpt['text'][1], $this->specialCharacters)) {
-                return $Element;
-            }
+        } elseif (isset($Excerpt['text'][1]) && in_array($Excerpt['text'][1], $this->specialCharacters)) {
+            return $Element;
         }
+        return null;
     }
 
 
@@ -213,15 +197,15 @@ class ParsedownMath extends ParsedownMathParentAlias
 
     protected function blockMath($Line)
     {
-        if (!$this->options['math']['enabled'] === true && !$this->options['math']['block']['enabled'] !== false) {
-            return;
+        if (!$this->options['math']['enabled'] && !$this->options['math']['block']['enabled']) {
+            return null;
         }
 
-        $Block = array(
-            'element' => array(
+        $Block = [
+            'element' => [
                 'text' => '',
-            ),
-        );
+            ],
+        ];
 
         if (preg_match('/^(?<!\\\\)(\\\\\[)(?!.)$/', $Line['text'])) {
             $Block['end'] = '\]';
@@ -230,6 +214,7 @@ class ParsedownMath extends ParsedownMathParentAlias
             $Block['end'] = '$$';
             return $Block;
         }
+        return null;
     }
 
     // ~
@@ -237,7 +222,7 @@ class ParsedownMath extends ParsedownMathParentAlias
     protected function blockMathContinue($Line, $Block)
     {
         if (isset($Block['complete'])) {
-            return;
+            return null;
         }
 
         if (isset($Block['interrupted'])) {
@@ -249,12 +234,12 @@ class ParsedownMath extends ParsedownMathParentAlias
         if (preg_match('/^(?<!\\\\)(\\\\\])$/', $Line['text']) && $Block['end'] === '\]') {
             $Block['complete'] = true;
             $Block['latex'] = true;
-            $Block['element']['text'] = "\\[".$Block['element']['text']."\\]";
+            $Block['element']['text'] = '\\['.$Block['element']['text'].'\\]';
             return $Block;
         } elseif (preg_match('/^(?<!\\\\)(\$\$)$/', $Line['text']) && $Block['end'] === '$$') {
             $Block['complete'] = true;
             $Block['latex'] = true;
-            $Block['element']['text'] = "$$".$Block['element']['text']."$$";
+            $Block['element']['text'] = '$$'.$Block['element']['text'].'$$';
             return $Block;
         }
 
