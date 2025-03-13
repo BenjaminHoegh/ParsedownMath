@@ -16,6 +16,7 @@ class ParsedownMath extends ParsedownMathParentAlias
     private bool $legacyMode = false;
 
     protected $options = [];
+    private string $mathMatch;
 
     public function __construct($options = '')
     {
