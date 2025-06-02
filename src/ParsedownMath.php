@@ -16,7 +16,6 @@ class ParsedownMath extends ParsedownMathParentAlias
     private bool $legacyMode = false;
 
     protected $options = [];
-    private string $mathMatch;
 
     public function __construct($options = '')
     {
@@ -105,9 +104,9 @@ class ParsedownMath extends ParsedownMathParentAlias
         }
 
         $matchSignleDollar = $this->options['math']['matchSingleDollar'] ?? false;
+        $mathMatch = '';
 
         // Using inline detection to detect Block single-line math.
-
         if (preg_match('/^(?<!\\\\)(?<!\$)\${2}(?!\$)[^$]*?(?<!\$)\${2}(?!\$)$/', $Excerpt['text'], $matches)) {
             $Block = [
                 'element' => [
@@ -127,20 +126,21 @@ class ParsedownMath extends ParsedownMathParentAlias
         if ($matchSignleDollar === true) {
             // Experimental
             if (preg_match('/^(?<!\\\\)((?<!\$)\$(?!\$)(.*?)(?<!\$)\$(?!\$)|(?<!\\\\\()\\\\\((.*?)(?<!\\\\\()\\\\\)(?!\\\\\)))/s', $Excerpt['text'], $matches)) {
-                $this->mathMatch = $matches[0];
+                $mathMatch = $matches[0];
             }
         } elseif (preg_match('/^(?<!\\\\)(?<!\\\\\()\\\\\((.*?)(?<!\\\\\()\\\\\)(?!\\\\\))/s', $Excerpt['text'], $matches)) {
-            $this->mathMatch = $matches[0];
+            $mathMatch = $matches[0];
         }
 
-        if (property_exists($this, 'mathMatch') && $this->mathMatch !== null) {
+        if ($mathMatch !== '') {
             return [
-                'extent' => strlen($this->mathMatch),
+                'extent' => strlen($mathMatch),
                 'element' => [
-                    'text' =>  $this->mathMatch,
+                    'text' => $mathMatch,
                 ],
             ];
         }
+        
         return null;
     }
 
